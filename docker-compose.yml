@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  # Student Dashboard (Next.js)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://195.35.20.155:8000}
+    ports:
+      - "5000:5000"
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://195.35.20.155:8000}
+      NODE_ENV: production
+    networks:
+      - college-community-api_default
+    mem_limit: 1g
+    cpus: 1.0
+    restart: unless-stopped
+
+networks:
+  college-community-api_default:
+    external: true
