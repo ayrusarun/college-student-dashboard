@@ -79,6 +79,11 @@ export const postApi = {
   get: (postId: number) => apiClient.get(`/posts/${postId}`),
 };
 
+// ==================== ASSESSMENTS API ====================
+export const assessmentApi = {
+  getMyProgress: () => apiClient.get("/academic/assessments/my-progress"),
+};
+
 // ==================== ALERTS API ====================
 export const alertApi = {
   list: (params?: { page?: number; page_size?: number; alert_type?: string }) =>
