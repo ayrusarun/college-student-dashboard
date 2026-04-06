@@ -50,19 +50,25 @@ export default function AttendancePage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const yearRes = await academicApi.getCurrentYear();
-        const year = yearRes.data;
-        if (!year) return;
+        // Try to get current academic year and semester for filtering
+        const params: { academic_year_id?: number; semester?: number } = {};
+        try {
+          const yearRes = await academicApi.getCurrentYear();
+          const year = yearRes.data;
+          if (year) {
+            params.academic_year_id = year.id;
+            const semRes = await academicApi.listSemesters(year.id);
+            const semesters = Array.isArray(semRes.data) ? semRes.data : semRes.data?.items || [];
+            const currentSem = semesters.find((s: any) => s.is_current);
+            if (currentSem) {
+              params.semester = currentSem.semester_number;
+            }
+          }
+        } catch {
+          // Continue without filters — backend will return all attendance
+        }
 
-        const semRes = await academicApi.listSemesters(year.id);
-        const semesters = Array.isArray(semRes.data) ? semRes.data : semRes.data?.items || [];
-        const currentSem = semesters.find((s: any) => s.is_current);
-        if (!currentSem) return;
-
-        const res = await attendanceApi.getMyAttendance({
-          academic_year_id: year.id,
-          semester: currentSem.semester_number,
-        });
+        const res = await attendanceApi.getMyAttendance(params);
         setData(Array.isArray(res.data) ? res.data : []);
       } catch {
         // ignore
