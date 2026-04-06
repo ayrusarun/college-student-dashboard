@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Home, BookOpen, CalendarClock, Bell, Clock, MapPin, ArrowRight } from "lucide-react";
+import { Home, BookOpen, CalendarClock, Bell, Clock, MapPin, ArrowRight, BarChart3 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { registrationApi, timetableApi, postApi, academicApi, alertApi } from "@/lib/api/client";
-import { TimetableEntry, Post } from "@/lib/types";
+import { registrationApi, timetableApi, postApi, academicApi, alertApi, attendanceApi } from "@/lib/api/client";
+import { TimetableEntry, Post, StudentSubjectAttendance } from "@/lib/types";
 import { formatDate, cn } from "@/lib/utils";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -14,6 +14,7 @@ export default function DashboardHome() {
   const { user } = useAuth();
   const [enrolledCount, setEnrolledCount] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [attendancePct, setAttendancePct] = useState<number | null>(null);
   const [todayEntries, setTodayEntries] = useState<TimetableEntry[]>([]);
   const [recentPosts, setRecentPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +37,7 @@ export default function DashboardHome() {
         const posts = Array.isArray(postsRes.data) ? postsRes.data : postsRes.data?.items || [];
         setRecentPosts(posts.slice(0, 3));
 
-        // Load today's timetable
+        // Load today's timetable + attendance
         try {
           const yearRes = await academicApi.getCurrentYear();
           const year = yearRes.data;
@@ -45,15 +46,29 @@ export default function DashboardHome() {
             const semesters = Array.isArray(semRes.data) ? semRes.data : semRes.data?.items || [];
             const currentSem = semesters.find((s: any) => s.is_current);
             if (currentSem) {
-              const ttRes = await timetableApi.getMyTimetable({
-                academic_year_id: year.id,
-                semester: currentSem.semester_number,
-              });
+              const [ttRes, attRes] = await Promise.all([
+                timetableApi.getMyTimetable({
+                  academic_year_id: year.id,
+                  semester: currentSem.semester_number,
+                }),
+                attendanceApi.getMyAttendance({
+                  academic_year_id: year.id,
+                  semester: currentSem.semester_number,
+                }).catch(() => ({ data: [] })),
+              ]);
               const entries = ttRes.data?.entries || [];
               setTodayEntries(
                 entries.filter((e: TimetableEntry) => e.day_of_week === todayIndex)
                   .sort((a: TimetableEntry, b: TimetableEntry) => a.start_time.localeCompare(b.start_time))
               );
+
+              // Compute overall attendance
+              const attData: StudentSubjectAttendance[] = Array.isArray(attRes.data) ? attRes.data : [];
+              const withSessions = attData.filter((d) => d.sessions_held > 0);
+              if (withSessions.length > 0) {
+                const avgPct = withSessions.reduce((s, d) => s + d.percentage, 0) / withSessions.length;
+                setAttendancePct(Math.round(avgPct * 10) / 10);
+              }
             }
           }
         } catch {
@@ -93,11 +108,11 @@ export default function DashboardHome() {
           {loading ? <Skeleton className="h-6 w-8 mx-auto" /> : <p className="text-lg font-bold text-gray-900">{enrolledCount}</p>}
           <p className="text-[10px] text-gray-500">Enrolled</p>
         </Link>
-        <div className="bg-white rounded-2xl border border-gray-100 p-3 text-center shadow-sm">
-          <CalendarClock className="h-5 w-5 text-blue-600 mx-auto mb-1" />
-          <p className="text-lg font-bold text-gray-900">{user?.year_of_study || "-"}</p>
-          <p className="text-[10px] text-gray-500">Year</p>
-        </div>
+        <Link href="/dashboard/attendance" className="bg-white rounded-2xl border border-gray-100 p-3 text-center shadow-sm hover:shadow transition-all">
+          <BarChart3 className={cn("h-5 w-5 mx-auto mb-1", attendancePct !== null && attendancePct < 75 ? "text-red-500" : "text-emerald-600")} />
+          {loading ? <Skeleton className="h-6 w-8 mx-auto" /> : <p className={cn("text-lg font-bold", attendancePct !== null && attendancePct < 75 ? "text-red-600" : "text-gray-900")}>{attendancePct !== null ? `${attendancePct}%` : "-"}</p>}
+          <p className="text-[10px] text-gray-500">Attendance</p>
+        </Link>
         <Link href="/dashboard/announcements" className="bg-white rounded-2xl border border-gray-100 p-3 text-center shadow-sm hover:shadow transition-all">
           <Bell className="h-5 w-5 text-amber-600 mx-auto mb-1" />
           {loading ? <Skeleton className="h-6 w-8 mx-auto" /> : <p className="text-lg font-bold text-gray-900">{unreadCount}</p>}

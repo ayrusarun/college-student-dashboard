@@ -171,3 +171,89 @@ export interface RegistrationStatus {
   subjects_enrolled: number;
   can_register_more: boolean;
 }
+
+// ==================== ATTENDANCE TYPES ====================
+
+export interface StudentSubjectAttendance {
+  student_id: number;
+  student_name?: string;
+  student_roll_number?: string;
+  offering_id: number;
+  offering_section_id: number;
+  subject_name?: string;
+  subject_code?: string;
+  sessions_held: number;
+  sessions_present: number;
+  sessions_late: number;
+  sessions_excused: number;
+  sessions_on_duty: number;
+  sessions_medical: number;
+  sessions_absent: number;
+  percentage: number;
+  effective_percentage: number;
+}
+
+// ==================== SESSION NOTE TYPES ====================
+
+export interface SessionNote {
+  id: number;
+  college_id: number;
+  schedule_entry_id: number;
+  note_date: string;
+  note_type: string; // PLAN, SUMMARY, HOMEWORK, FEEDBACK, GENERAL
+  content?: string;
+  attachments: any[];
+  is_visible_to_students: boolean;
+  created_by: number;
+  author_name?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// ==================== SESSION OVERRIDE TYPES ====================
+
+export interface SessionOverride {
+  id: number;
+  override_type: string; // CANCEL, EXTRA, RESCHEDULE
+  schedule_entry_id?: number;
+  override_date: string;
+  reason: string;
+  reason_text?: string;
+  status: string; // PENDING, APPROVED, REJECTED
+  subject_code?: string;
+  subject_name?: string;
+  original_start_time?: string;
+  original_end_time?: string;
+  original_day_of_week?: number;
+  replacement_date?: string;
+  replacement_start_time?: string;
+  replacement_end_time?: string;
+  created_at?: string;
+}
+
+// ==================== STUDENT SESSION TYPES ====================
+
+export interface StudentSessionItem {
+  schedule_entry_id: number;
+  session_date: string;
+  subject_name?: string;
+  subject_code?: string;
+  class_name?: string;
+  section_code?: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  room_code?: string;
+  faculty_name?: string;
+  slot_type?: string;
+  // Session status
+  session_status: "upcoming" | "completed" | "cancelled" | "rescheduled" | "extra" | "no_data";
+  attendance_status?: string; // PRESENT, ABSENT, LATE, EXCUSED, ON_DUTY, MEDICAL_LEAVE
+  topic_covered?: string;
+  // Notes visible to students
+  notes: SessionNote[];
+  // Override info
+  override_type?: string; // CANCEL, EXTRA, RESCHEDULE
+  override_reason?: string;
+  override_reason_text?: string;
+}

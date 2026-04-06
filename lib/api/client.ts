@@ -84,6 +84,26 @@ export const assessmentApi = {
   getMyProgress: () => apiClient.get("/academic/assessments/my-progress"),
 };
 
+// ==================== ATTENDANCE API ====================
+export const attendanceApi = {
+  getMyAttendance: (params?: { academic_year_id?: number; semester?: number }) =>
+    apiClient.get("/academic/attendance/my-attendance", { params }),
+  getMyStudentSessions: (params: { session_date: string; academic_year_id: number; semester: number }) =>
+    apiClient.get("/academic/attendance/my-student-sessions", { params }),
+};
+
+// ==================== SESSION NOTES API ====================
+export const sessionNotesApi = {
+  list: (params?: { schedule_entry_id?: number; note_date?: string; note_type?: string }) =>
+    apiClient.get("/academic/sessions/notes", { params }),
+};
+
+// ==================== SESSION OVERRIDES API ====================
+export const sessionOverridesApi = {
+  list: (params?: { override_type?: string; status?: string; date_from?: string; date_to?: string }) =>
+    apiClient.get("/academic/sessions/overrides", { params }),
+};
+
 // ==================== ALERTS API ====================
 export const alertApi = {
   list: (params?: { page?: number; page_size?: number; alert_type?: string }) =>
