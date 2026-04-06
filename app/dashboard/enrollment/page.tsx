@@ -40,8 +40,20 @@ export default function EnrollmentPage() {
           setEnrollments(Array.isArray(data) ? data : []);
         }
       } else {
-        const res = await registrationApi.getAvailable();
-        setOfferings(Array.isArray(res.data) ? res.data : []);
+        // Load both enrolled subjects and available offerings
+        const [enrollRes, availRes] = await Promise.all([
+          registrationApi.getMySubjects().catch(() => ({ data: { enrollments: [] } })),
+          registrationApi.getAvailable(),
+        ]);
+        const myEnrollments: StudentEnrollment[] = enrollRes.data?.enrollments || (Array.isArray(enrollRes.data) ? enrollRes.data : []);
+        const enrolledOfferingIds = new Set(
+          myEnrollments
+            .filter((e: StudentEnrollment) => e.enrollment_status === "ENROLLED" || e.enrollment_status === "WAITLISTED")
+            .map((e: StudentEnrollment) => e.offering_id)
+        );
+        const allOfferings = Array.isArray(availRes.data) ? availRes.data : [];
+        // Filter out already enrolled offerings
+        setOfferings(allOfferings.filter((o: SubjectOffering) => !enrolledOfferingIds.has(o.id)));
       }
     } catch {
       // ignore
