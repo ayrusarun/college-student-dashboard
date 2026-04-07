@@ -50,19 +50,13 @@ export default function AttendancePage() {
   useEffect(() => {
     const load = async () => {
       try {
-        // Try to get current academic year and semester for filtering
-        const params: { academic_year_id?: number; semester?: number } = {};
+        // Only filter by academic year — don't send semester since
+        // the API expects cohort semester (1-8), not academic semester (1-2)
+        const params: { academic_year_id?: number } = {};
         try {
           const yearRes = await academicApi.getCurrentYear();
-          const year = yearRes.data;
-          if (year) {
-            params.academic_year_id = year.id;
-            const semRes = await academicApi.listSemesters(year.id);
-            const semesters = Array.isArray(semRes.data) ? semRes.data : semRes.data?.items || [];
-            const currentSem = semesters.find((s: any) => s.is_current);
-            if (currentSem) {
-              params.semester = currentSem.semester_number;
-            }
+          if (yearRes.data) {
+            params.academic_year_id = yearRes.data.id;
           }
         } catch {
           // Continue without filters — backend will return all attendance

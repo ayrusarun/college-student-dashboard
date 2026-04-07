@@ -53,7 +53,6 @@ export default function DashboardHome() {
                 }),
                 attendanceApi.getMyAttendance({
                   academic_year_id: year.id,
-                  semester: currentSem.semester_number,
                 }).catch(() => ({ data: [] })),
               ]);
               const entries = ttRes.data?.entries || [];
